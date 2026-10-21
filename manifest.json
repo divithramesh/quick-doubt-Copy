@@ -1,0 +1,26 @@
+
+{
+  "manifest_version": 3,
+  "name": "Quick Doubt",
+  "version": "0.1.0",
+  "description": "Understand unfamiliar terms without interrupting your ChatGPT lesson.",
+  "permissions": ["tabs"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "commands": {
+    "show-quick-doubt": {
+      "suggested_key": {
+        "default": "Alt+Shift+Y",
+        "mac": "Alt+Shift+Y"
+      },
+      "description": "Show Quick Doubt for selected text"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://chatgpt.com/*"],
+      "js": ["content.js"]
+    }
+  ]
+}
