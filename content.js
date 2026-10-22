@@ -3,7 +3,29 @@ console.log("Quick Doubt loaded");
 
 let doubtCard = null;
 
-// Create a button we can click to test the extension.
+// Collect visible lesson text from the ChatGPT page.
+function getLessonContext() {
+  const turns = [
+    ...document.querySelectorAll("[data-chatgpt-search-unit-key]")
+  ];
+
+  const messages = turns
+    .map(turn => {
+      const key = turn.getAttribute("data-chatgpt-search-unit-key");
+      const text = turn.innerText.trim();
+
+      return { key, text };
+    })
+    .filter(turn =>
+      turn.key?.endsWith(":assistant") &&
+      turn.text.length > 0
+    )
+    .map(turn => turn.text);
+
+  return messages.slice(-3).join("\n\n");
+}
+
+// Create the Quick Doubt button.
 const launchButton = document.createElement("button");
 
 launchButton.textContent = "Quick Doubt";
@@ -23,7 +45,7 @@ Object.assign(launchButton.style, {
 
 document.body.appendChild(launchButton);
 
-// Show the card when the button is clicked.
+// Show the card when the button is clicked or shortcut is used.
 launchButton.addEventListener("click", () => {
   if (doubtCard) {
     doubtCard.remove();
@@ -37,7 +59,7 @@ launchButton.addEventListener("click", () => {
     position: "fixed",
     right: "24px",
     bottom: "80px",
-    width: "280px",
+    width: "300px",
     padding: "20px",
     background: "white",
     color: "#222",
@@ -56,7 +78,23 @@ launchButton.addEventListener("click", () => {
   const term = document.createElement("p");
   term.textContent = selectedText
     ? "Selected: " + selectedText
-    : "No text selected yet. This is a test of the floating card.";
+    : "No text selected yet.";
+
+  const contextTitle = document.createElement("h4");
+  contextTitle.textContent = "Lesson context";
+  contextTitle.style.marginBottom = "6px";
+
+  const contextPreview = document.createElement("p");
+  contextPreview.textContent =
+    getLessonContext() || "No lesson text found.";
+
+  Object.assign(contextPreview.style, {
+    fontSize: "12px",
+    maxHeight: "180px",
+    overflowY: "auto",
+    whiteSpace: "pre-wrap",
+    overflowWrap: "anywhere"
+  });
 
   const closeButton = document.createElement("button");
   closeButton.textContent = "Close";
@@ -66,13 +104,20 @@ launchButton.addEventListener("click", () => {
     doubtCard = null;
   });
 
-  doubtCard.append(title, term, closeButton);
+  doubtCard.append(
+    title,
+    term,
+    contextTitle,
+    contextPreview,
+    closeButton
+  );
+
   document.body.appendChild(doubtCard);
 });
 
+// Receive the keyboard shortcut from background.js.
 chrome.runtime.onMessage.addListener((message) => {
   if (message.action === "show-quick-doubt") {
     launchButton.click();
   }
 });
-
